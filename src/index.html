@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WSI imaGES Portal - Advanced Pathology Analysis</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/plotly.js-dist-min"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="portal-container">
+        <header class="main-header">
+            <div class="header-content">
+                <h1>🔬 WSI imaGES Portal</h1>
+                <div class="subtitle">Advanced Whole Slide Image Analysis & Deep Learning</div>
+                <div class="description">Powered by SWIN Transformers, SAE (Matryoshka), and cutting-edge computer vision for precise pathological analysis</div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <section class="section">
+                <div class="section-header">
+                    <div class="section-icon">📁</div>
+                    <div class="section-title">Image Upload & Preprocessing</div>
+                </div>
+
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-content">
+                        <div class="upload-icon">🖼️</div>
+                        <div class="upload-text">Drop your pathology images here</div>
+                        <div class="upload-subtext">Supports JPEG, PNG, TIFF, SVS, NDPI formats</div>
+                        <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.tiff,.tif,.svs,.ndpi" style="display: none;">
+                        <button class="btn" id="selectFiles">Select Files</button>
+                    </div>
+                </div>
+
+                <div class="file-list" id="fileList" style="display: none;">
+                    <h3>Uploaded Files</h3>
+                </div>
+
+                <div class="stats-grid" id="uploadStats">
+                    <div class="stat-card">
+                        <span class="stat-value" id="totalFiles">0</span>
+                        <div class="stat-label">Total Files</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="totalSize">0 MB</span>
+                        <div class="stat-label">Total Size</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="processedFiles">0</span>
+                        <div class="stat-label">Processed</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-header">
+                    <div class="section-icon">🤖</div>
+                    <div class="section-title">Deep Learning Configuration</div>
+                </div>
+
+                <div class="tabs-container">
+                    <div class="tabs-nav">
+                        <button class="tab-btn active" data-tab="model-selection">Model Selection</button>
+                        <button class="tab-btn" data-tab="preprocessing">Preprocessing</button>
+                        <button class="tab-btn" data-tab="segmentation">Segmentation</button>
+                    </div>
+
+                    <div class="tab-content active" id="model-selection">
+                        <h3 style="margin-bottom: 20px;">Choose Your Deep Learning Model</h3>
+                        <div class="model-selector">
+                            <div class="model-card" data-model="swin">
+                                <div class="model-icon">🏢</div>
+                                <div class="model-name">SWIN Transformer</div>
+                                <div class="model-description">Hierarchical vision transformer with shifted windows</div>
+                            </div>
+                            <div class="model-card selected" data-model="sae">
+                                <div class="model-icon">🪆</div>
+                                <div class="model-name">SAE (Matryoshka)</div>
+                                <div class="model-description">Nested representation learning for efficient feature extraction</div>
+                            </div>
+                            <div class="model-card" data-model="vit">
+                                <div class="model-icon">👁️</div>
+                                <div class="model-name">Vision Transformer</div>
+                                <div class="model-description">Standard ViT with attention mechanism</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="preprocessing">
+                        <div class="config-grid">
+                            <div class="config-card">
+                                <div class="config-title">Patch Configuration</div>
+                                <div class="form-group">
+                                    <label class="form-label">Patch Size</label>
+                                    <select class="form-control" id="patchSize">
+                                        <option value="224">224x224</option>
+                                        <option value="256">256x256</option>
+                                        <option value="512" selected>512x512</option>
+                                        <option value="1024">1024x1024</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Overlap Ratio</label>
+                                    <input type="range" class="form-control" id="overlapRatio" min="0" max="0.5" step="0.1" value="0.2">
+                                    <span id="overlapValue">0.2</span>
+                                </div>
+                            </div>
+                            <div class="config-card">
+                                <div class="config-title">Magnification Settings</div>
+                                <div class="form-group">
+                                    <label class="form-label">Target Magnification</label>
+                                    <select class="form-control" id="magnification">
+                                        <option value="10x">10x</option>
+                                        <option value="20x" selected>20x</option>
+                                        <option value="40x">40x</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Tissue Detection Threshold</label>
+                                    <input type="range" class="form-control" id="tissueThreshold" min="0.1" max="0.9" step="0.1" value="0.5">
+                                    <span id="tissueValue">0.5</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="segmentation">
+                        <div class="config-grid">
+                            <div class="config-card">
+                                <div class="config-title">Segmentation Method</div>
+                                <div class="form-group">
+                                    <label class="form-label">Algorithm</label>
+                                    <select class="form-control" id="segmentationMethod">
+                                        <option value="unet">U-Net</option>
+                                        <option value="deeplabv3" selected>DeepLabV3+</option>
+                                        <option value="mask-rcnn">Mask R-CNN</option>
+                                        <option value="sam">Segment Anything Model</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Confidence Threshold</label>
+                                    <input type="range" class="form-control" id="confidenceThreshold" min="0.1" max="1.0" step="0.05" value="0.8">
+                                    <span id="confidenceValue">0.8</span>
+                                </div>
+                            </div>
+                            <div class="config-card">
+                                <div class="config-title">Post-processing</div>
+                                <div class="form-group">
+                                    <label class="form-label">Min Object Size (pixels)</label>
+                                    <input type="number" class="form-control" id="minObjectSize" value="100">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Morphological Operations</label>
+                                    <select class="form-control" id="morphOps">
+                                        <option value="none">None</option>
+                                        <option value="opening">Opening</option>
+                                        <option value="closing" selected>Closing</option>
+                                        <option value="both">Opening + Closing</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="btn" id="startAnalysis" disabled>Start Analysis</button>
+                    <button class="btn btn-secondary" id="loadModel">Load Model</button>
+                </div>
+            </section>
+
+            <section class="algorithm-preview">
+                <div class="algorithm-title">Analysis Pipeline</div>
+                <div class="algorithm-steps">
+                    <div class="algorithm-step">
+                        <div class="step-number">1</div>
+                        <div class="step-title">Image Preprocessing</div>
+                        <div class="step-description">Normalize, resize, and extract patches from WSI</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">2</div>
+                        <div class="step-title">Feature Extraction</div>
+                        <div class="step-description">Extract deep features using selected transformer</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">3</div>
+                        <div class="step-title">Segmentation</div>
+                        <div class="step-description">Identify and segment regions of interest</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">4</div>
+                        <div class="step-title">Analysis & Classification</div>
+                        <div class="step-description">Classify tissue types and detect anomalies</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">5</div>
+                        <div class="step-title">Results Export</div>
+                        <div class="step-description">Generate reports and visualizations</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section" id="progressSection" style="display: none;">
+                <div class="section-header">
+                    <div class="section-icon">⚡</div>
+                    <div class="section-title">Analysis Progress</div>
+                </div>
+
+                <div class="progress-container">
+                    <div class="progress-header">
+                        <div class="progress-text" id="progressText">Initializing...</div>
+                        <div class="progress-percent" id="progressPercent">0%</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-value" id="currentStep">1</span>
+                        <div class="stat-label">Current Step</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="timeElapsed">0s</span>
+                        <div class="stat-label">Time Elapsed</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="estimatedTime">--</span>
+                        <div class="stat-label">ETA</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="patchesProcessed">0</span>
+                        <div class="stat-label">Patches Processed</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section" id="resultsSection" style="display: none;">
+                <div class="section-header">
+                    <div class="section-icon">📊</div>
+                    <div class="section-title">Analysis Results</div>
+                </div>
+
+                <div class="results-grid">
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">🎯</div>
+                            <div class="result-title">Feature Visualization</div>
+                        </div>
+                        <div class="visualization-container" id="featureViz">
+                            <div>Feature embeddings will appear here</div>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">🔍</div>
+                            <div class="result-title">Segmentation Results</div>
+                        </div>
+                        <div class="visualization-container" id="segmentationViz">
+                            <div>Segmentation overlays will appear here</div>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">📈</div>
+                            <div class="result-title">Classification Report</div>
+                        </div>
+                        <div class="visualization-container" id="classificationReport">
+                            <div>Classification metrics will appear here</div>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-icon">🗺️</div>
+                            <div class="result-title">Attention Maps</div>
+                        </div>
+                        <div class="visualization-container" id="attentionMaps">
+                            <div>Transformer attention visualizations will appear here</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="btn" id="exportResults">Export Results</button>
+                    <button class="btn btn-secondary" id="generateReport">Generate Report</button>
+                    <button class="btn btn-secondary" id="downloadData">Download Raw Data</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

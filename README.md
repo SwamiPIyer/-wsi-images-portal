@@ -60,8 +60,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Contact
 
-- **Author**: Your Name
-- **Email**: your.email@example.com
+- **Author**: Swami P Iyer
+- **Email**: swami.padmanabhan@gmail.com
 - **Project Link**: https://github.com/SwamiPIyer/wsi-images-portal
 
 ---
